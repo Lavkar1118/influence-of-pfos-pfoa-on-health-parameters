@@ -9,7 +9,7 @@
 
 ### Study Procedure:
 
-* Statistical software R was used to
+* Analysis was performed using Statistical Software R 
 
   * Data was cleaned and manipulated to produce summary statistics
 
