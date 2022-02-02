@@ -10,9 +10,20 @@
 ### Study Procedure:
 
 * Statistical software R was used to
+
   * Data was cleaned and manipulated to produce summary statistics
+
+![This is an image](/Assets/summary_stats.png)
+
   * Histograms and boxplots were constructed to understand distribution of demographic and primary dependent variables
+
+![This is an image](/Assets/distributions.png)
+![This is an image](/Assets/pfos_distribution.png)
+
   * Build both simple and multiple regression models to check for statistical significance of covirates. 
+
+![This is an image](/Assets/simple_reg.png)
+![This is an image](/Assets/multi_reg.png)
 
 ### Key Findings:
 
