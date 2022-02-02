@@ -1,0 +1,715 @@
+---
+title: "Code_Datawrangling_and_EDA"
+author: "Lavanya Muthukumar"
+date: "1/31/2022"
+output: pdf_document
+editor_options: 
+  chunk_output_type: console
+---
+```{r}
+# load libraries
+library(tidyverse)
+library(tableone)
+
+```
+
+```{r}
+# read data
+DATA = read.csv("Data/Data_Renamed.csv",na="")
+
+str(DATA)
+colnames(DATA)
+colSums(is.na(DATA))
+
+```
+
+```{r}
+# create variables 
+pfoa = DATA$PFOA
+pfos = DATA$PFOS
+gender = DATA$Gender
+age = DATA$Age
+race = DATA$Race
+diet = DATA$Diet
+diet_ordered = ordered(diet, levels=c("Excellent", "VeryGood", "Good", "Fair", "Poor"))
+bmi = DATA$BMI
+cholestrol = DATA$Cholestrol
+smoking = DATA$Smoking
+glyco = DATA$Glycohemoglobin
+sedentary = DATA$Sedentary
+
+#image resolution specs
+
+w = 300
+h = 200
+res = 300
+
+
+```
+
+##Exploratory Analysis
+```{r}
+# Frequency Distribution of demograhic variables - histograms
+{
+# Age 
+jpeg(file="Output_Images/age_distribution.jpg", width = w, height = h, units='mm', res = res)
+hist(age, main = " ",  xlab =  "Age(years)", ylab = "Frequency", col = "#bcbddc")
+dev.off()
+
+# Gender
+jpeg(file="Output_Images/gender_distribution.jpg", width = w, height = h, units='mm', res = res)
+boxplot(age ~ gender, xlab = "Gender", ylab = "Age", col = c("#deebf7", "#fee0d2"))
+dev.off()
+
+# Race
+jpeg(file="Output_Images/race_distribution.jpg", width = w, height = h, units='mm', res = res)
+barplot(prop.table(table(race)), xlab = "Race", ylab = "Proportion", col="#99d8c9")
+dev.off()
+
+# Smoking
+jpeg(file="Output_Images/smoking_distribution.jpg", width = w, height = h, units='mm', res = res)
+barplot(prop.table(table(smoking)),ylim = c(0,1), xlab = "Smoking status", ylab = "Proportion", col="#bdbdbd")
+dev.off()
+
+# Diet
+jpeg(file="Output_Images/diet_distribution.jpg", width = w, height = h, units='mm', res = res)
+barplot(prop.table(table(diet_ordered)), xlab= "Diet Quality", ylab= "Proportion", col="#ffeda0")
+dev.off()
+
+# Sedentary 
+jpeg(file="Output_Images/sedantary_distribution.jpg", width = w, height = h, units='mm', res = res)
+hist((sedentary), col="#fc9272", main="", ylab= "Frequency", xlab = "Minutes of sedentary activity per day")
+dev.off()
+}
+
+```
+
+
+```{r}
+# Boxplots
+{
+# Gender
+jpeg(file="Output_Images/pfoa_across_categories.jpg", width = w, height = h, units='mm', res = res)
+boxplot(pfoa~gender, at = c(1,2), xlim = c(0,18), xlab = "", ylab = "PFOA (ng/ml)", col= "#feb24c", cex.axis = 0.75)
+boxplot(pfoa~race, at = c(4:9), xlab = "", ylab = "PFOA (ng/ml)", col= "#99d8c9", add = TRUE, cex.axis = 0.75, names = c("Asian", "Black", "\nMex\nAmer", "Other", "\nOther\nHisp", "White"))
+boxplot(pfoa~diet_ordered, at = c(11:15), xlab = "", ylab = "PFOA (ng/ml)", col= "#bcbddc", add = TRUE, cex.axis = 0.75, names = c("Excel", "V.Good", "Good", "Fair", "Poor"))
+boxplot(pfoa~smoking, at = c(17,18), xlim = c(0,20), xlab = "", ylab = "PFOA (ng/ml)", col= "#fa9fb5", cex.axis = 0.75, add = TRUE)
+abline(h=median(pfoa))
+dev.off()
+
+jpeg(file="Output_Images/pfos_across_categories.jpg", width = w, height = h, units='mm', res = res)
+boxplot(pfos~gender, at = c(1,2), xlim = c(0,18), xlab = "", ylab = "PFOS (ng/ml)", col= "#feb24c", cex.axis = 0.75)
+boxplot(pfos~race, at = c(4:9), xlab = "", ylab = "PFOS (ng/ml)", col= "#99d8c9", add = TRUE, cex.axis = 0.75, names = c("Asian", "Black", "\nMex\nAmer", "Other", "\nOther\nHisp", "White"))
+boxplot(pfos~diet_ordered, at = c(11:15), xlab = "", ylab = "PFOS (ng/ml)", col= "#bcbddc", add = TRUE, cex.axis = 0.75, names = c("Excel", "V.Good", "Good", "Fair", "Poor"))
+boxplot(pfos~smoking, at = c(17,18), xlim = c(0,20), xlab = "", ylab = "PFOS (ng/ml)", col= "#fa9fb5", cex.axis = 0.75, add = TRUE)
+abline(h=median(pfos))
+dev.off()
+}
+
+```
+
+```{r}
+# Scatter plots - Overall (with outliers)
+{
+# PFOA
+# cholestrol
+jpeg(file="Output_Images/cholestrol_pfoa_plot.jpg", width = w, height = h, units='mm', res = res)
+plot(pfoa, cholestrol, xlab = "PFOA", ylab = "Cholestrol mg/Dl", pch = 19, col= "#99d8c9")
+legend("topright",legend = paste("R = ", round(cor(cholestrol, pfoa, use = "complete.obs"),4)))
+dev.off()
+
+# bmi
+jpeg(file="Output_Images/bmi_pfoa_plot.jpg", width = w, height = h, units='mm', res = res)
+plot(pfoa, bmi, xlab = "PFOA", ylab = "BMI", pch = 19, col= "#feb24c")
+legend("topright",legend = paste("R = ", round(cor(bmi, pfoa, use = "complete.obs"),4)))
+dev.off()
+
+# glyco
+jpeg(file="Output_Images/glyco_pfoa_plot.jpg", width = w, height = h, units='mm', res = res)
+plot(pfoa, glyco, xlab = "PFOA", ylab = "Glycohemoglobin %", pch = 19, col= "#fa9fb5")
+legend("topright",legend = paste("R = ", round(cor(glyco, pfoa, use = "complete.obs"),4)))
+dev.off()
+
+# PFOS
+# cholestrol
+jpeg(file="Output_Images/cholestrol_pfos_plot.jpg", width = w, height = h, units='mm', res = res)
+plot(pfos, cholestrol, xlab = "PFOS", ylab = "Cholestrol mg/Dl", pch = 19, col= "#99d8c9")
+legend("topright",legend = paste("R = ", round(cor(cholestrol, pfos, use = "complete.obs"),4)))
+dev.off()
+
+# bmi
+jpeg(file="Output_Images/bmi_pfos_plot.jpg", width = w, height = h, units='mm', res = res)
+plot(pfos, bmi, xlab = "PFOS", ylab = "BMI", pch = 19, col= "#feb24c")
+legend("topright",legend = paste("R = ", round(cor(bmi, pfos, use = "complete.obs"),4)))
+dev.off()
+
+# glyco
+jpeg(file="Output_Images/glyco_pfos_plot.jpg", width = w, height = h, units='mm', res = res)
+plot(pfos, glyco, xlab = "PFOS", ylab = "Glycohemoglobin %", pch = 19, col= "#fa9fb5")
+legend("topright",legend = paste("R = ", round(cor(glyco, pfos, use = "complete.obs"),4)))
+dev.off()
+}
+
+# Correlation plots - Overall (with outliers)
+{
+# PFOA
+# cholestrol
+jpeg(file="Output_Images/cholestrol_no_outliers_pfoa_plot.jpg", width = w, height = h, units='mm', res = res)
+plot(pfoa[which(cholestrol<350)], cholestrol[which(cholestrol<350)], xlab = "PFOA", ylab = "Cholestrol mg/Dl", pch = 19, col= "#99d8c9")
+legend("topright",legend = paste("R = ", round(cor(pfoa[which(cholestrol<350)], cholestrol[which(cholestrol<350)], use= "complete.obs"),4)))
+dev.off()
+
+# bmi
+jpeg(file="Output_Images/bmi_no_outliers_pfoa_plot.jpg", width = w, height = h, units='mm', res = res)
+plot(pfoa[which(bmi<48)], bmi[which(bmi<48)], xlab = "PFOA", ylab = "BMI", pch = 19, col= "#feb24c")
+legend("topright",legend = paste("R = ", round(cor(pfoa[which(bmi<48)], bmi[which(bmi<48)], use = "complete.obs"),4)))
+dev.off()
+
+# glyco
+jpeg(file="Output_Images/glyco_no_outliers_pfoa_plot.jpg", width = w, height = h, units='mm', res = res)
+plot(pfoa[which(glyco<6.5)], glyco[which(glyco<6.5)], xlab = "PFOA", ylab = "Glycohemoglobin %", pch = 19, col= "#fa9fb5")
+legend("topright",legend = paste("R = ", round(cor(pfoa[which(glyco<6.5)], glyco[which(glyco<6.5)], use = "complete.obs"),4)))
+dev.off()
+
+# PFOS
+# cholestrol
+jpeg(file="Output_Images/cholestrol_no_outliers_pfos_plot.jpg", width = w, height = h, units='mm', res = res)
+plot(pfos[which(cholestrol<350)], cholestrol[which(cholestrol<350)], xlab = "PFOS", ylab = "Cholestrol mg/Dl", pch = 19, col= "#99d8c9")
+legend("topright",legend = paste("R = ", round(cor(pfos[which(cholestrol<350)], cholestrol[which(cholestrol<350)], use= "complete.obs"),4)))
+dev.off()
+
+# bmi
+jpeg(file="Output_Images/bmi_no_outliers_pfos_plot.jpg", width = w, height = h, units='mm', res = res)
+plot(pfos[which(bmi<48)], bmi[which(bmi<48)], xlab = "PFOS", ylab = "BMI", pch = 19, col= "#feb24c")
+legend("topright",legend = paste("R = ", round(cor(pfos[which(bmi<48)], bmi[which(bmi<48)], use = "complete.obs"),4)))
+dev.off()
+
+# glyco
+jpeg(file="Output_Images/glyco_no_outliers_pfos_plot.jpg", width = w, height = h, units='mm', res = res)
+plot(pfos[which(glyco<6.5)], glyco[which(glyco<6.5)], xlab = "PFOS", ylab = "Glycohemoglobin %", pch = 19, col= "#fa9fb5")
+legend("topright",legend = paste("R = ", round(cor(pfos[which(glyco<6.5)], glyco[which(glyco<6.5)], use = "complete.obs"),4)))
+dev.off()
+}
+
+```
+
+
+```{r}
+# Correlation Matrix - To access confounders
+
+# PFOA
+# PFOA vs Cholesterol
+corr_pfoa_cholestrol_overall = round(cor(cholestrol, pfoa, use = "complete.obs"),4)
+
+corr_pfoa_cholestrol_male = round(cor(cholestrol[which(gender=='Male')], pfoa[which(gender=='Male')], use = "complete.obs"),4)
+
+corr_pfoa_cholestrol_female = round(cor(cholestrol[which(gender=='Female')], pfoa[which(gender=='Female')], use = "complete.obs"),4)
+
+corr_pfoa_cholestrol_smoker = round(cor(cholestrol[which(smoking=='Yes')], pfoa[which(smoking=='Yes')], use = "complete.obs"),4)
+corr_pfoa_cholestrol_nonsmoker = round(cor(cholestrol[which(smoking=='No')], pfoa[which(smoking=='No')], use = "complete.obs"),4)
+
+corr_pfoa_cholestrol_poor = round(cor(cholestrol[which(diet=='Poor')], pfoa[which(diet=='Poor')], use = "complete.obs"),4)
+corr_pfoa_cholestrol_good = round(cor(cholestrol[which(diet=='Good')], pfoa[which(diet=='Good')], use = "complete.obs"),4)
+corr_pfoa_cholestrol_excellent = round(cor(cholestrol[which(diet=='Excellent')], pfoa[which(diet=='Excellent')], use = "complete.obs"),4)
+
+corr_pfoa_cholestrol_Asian = round(cor(cholestrol[which(race=='Asian')], pfoa[which(race=='Asian')], use = "complete.obs"),4)
+corr_pfoa_cholestrol_Black = round(cor(cholestrol[which(race=='Black')], pfoa[which(race=='Black')], use = "complete.obs"),4)
+corr_pfoa_cholestrol_White = round(cor(cholestrol[which(race=='White')], pfoa[which(race=='White')], use = "complete.obs"),4)
+
+corr_pfoa_cholestrol = c(corr_pfoa_cholestrol_overall, 
+                         corr_pfoa_cholestrol_male, corr_pfoa_cholestrol_female,
+                         corr_pfoa_cholestrol_poor, corr_pfoa_cholestrol_good, corr_pfoa_cholestrol_excellent,
+                         corr_pfoa_cholestrol_smoker, corr_pfoa_cholestrol_nonsmoker,
+                         corr_pfoa_cholestrol_White, corr_pfoa_cholestrol_Black, corr_pfoa_cholestrol_Asian)
+
+# PFOA vs Glyco
+corr_pfoa_glyco_overall = round(cor(glyco, pfoa, use = "complete.obs"),4)
+
+corr_pfoa_glyco_male = round(cor(glyco[which(gender=='Male')], pfoa[which(gender=='Male')], use = "complete.obs"),4)
+corr_pfoa_glyco_female = round(cor(glyco[which(gender=='Female')], pfoa[which(gender=='Female')], use = "complete.obs"),4)
+
+corr_pfoa_glyco_smoker = round(cor(glyco[which(smoking=='Yes')], pfoa[which(smoking=='Yes')], use = "complete.obs"),4)
+corr_pfoa_glyco_nonsmoker = round(cor(glyco[which(smoking=='No')], pfoa[which(smoking=='No')], use = "complete.obs"),4)
+
+corr_pfoa_glyco_poor = round(cor(glyco[which(diet=='Poor')], pfoa[which(diet=='Poor')], use = "complete.obs"),4)
+corr_pfoa_glyco_good = round(cor(glyco[which(diet=='Good')], pfoa[which(diet=='Good')], use = "complete.obs"),4)
+corr_pfoa_glyco_excellent = round(cor(glyco[which(diet=='Excellent')], pfoa[which(diet=='Excellent')], use = "complete.obs"),4)
+
+corr_pfoa_glyco_Asian = round(cor(glyco[which(race=='Asian')], pfoa[which(race=='Asian')], use = "complete.obs"),4)
+corr_pfoa_glyco_Black = round(cor(glyco[which(race=='Black')], pfoa[which(race=='Black')], use = "complete.obs"),4)
+corr_pfoa_glyco_MexicanAmerican = round(cor(glyco[which(race=='MexicanAmerican')], pfoa[which(race=='MexicanAmerican')], use = "complete.obs"),4)
+corr_pfoa_glyco_Other = round(cor(glyco[which(race=='Other')], pfoa[which(race=='Other')], use = "complete.obs"),4)
+corr_pfoa_glyco_OtherHispanic = round(cor(glyco[which(race=='OtherHispanic')], pfoa[which(race=='OtherHispanic')], use = "complete.obs"),4)
+corr_pfoa_glyco_White = round(cor(glyco[which(race=='White')], pfoa[which(race=='White')], use = "complete.obs"),4)
+
+corr_pfoa_glyco = c(corr_pfoa_glyco_overall, 
+                    corr_pfoa_glyco_male, corr_pfoa_glyco_female,
+                    corr_pfoa_glyco_poor, corr_pfoa_glyco_good, corr_pfoa_glyco_excellent,
+                    corr_pfoa_glyco_smoker, corr_pfoa_glyco_nonsmoker,
+                    corr_pfoa_glyco_White, corr_pfoa_glyco_Black, corr_pfoa_glyco_Asian)
+
+# PFOA vs bmi
+corr_pfoa_bmi_overall = round(cor(bmi, pfoa, use = "complete.obs"),4)
+
+corr_pfoa_bmi_male = round(cor(bmi[which(gender=='Male')], pfoa[which(gender=='Male')], use = "complete.obs"),4)
+corr_pfoa_bmi_female = round(cor(bmi[which(gender=='Female')], pfoa[which(gender=='Female')], use = "complete.obs"),4)
+
+corr_pfoa_bmi_smoker = round(cor(bmi[which(smoking=='Yes')], pfoa[which(smoking=='Yes')], use = "complete.obs"),4)
+corr_pfoa_bmi_nonsmoker = round(cor(bmi[which(smoking=='No')], pfoa[which(smoking=='No')], use = "complete.obs"),4)
+
+corr_pfoa_bmi_poor = round(cor(bmi[which(diet=='Poor')], pfoa[which(diet=='Poor')], use = "complete.obs"),4)
+corr_pfoa_bmi_good = round(cor(bmi[which(diet=='Good')], pfoa[which(diet=='Good')], use = "complete.obs"),4)
+corr_pfoa_bmi_excellent = round(cor(bmi[which(diet=='Excellent')], pfoa[which(diet=='Excellent')], use = "complete.obs"),4)
+
+corr_pfoa_bmi_Asian = round(cor(bmi[which(race=='Asian')], pfoa[which(race=='Asian')], use = "complete.obs"),4)
+corr_pfoa_bmi_Black = round(cor(bmi[which(race=='Black')], pfoa[which(race=='Black')], use = "complete.obs"),4)
+corr_pfoa_bmi_MexicanAmerican = round(cor(bmi[which(race=='MexicanAmerican')], pfoa[which(race=='MexicanAmerican')], use = "complete.obs"),4)
+corr_pfoa_bmi_Other = round(cor(bmi[which(race=='Other')], pfoa[which(race=='Other')], use = "complete.obs"),4)
+corr_pfoa_bmi_OtherHispanic = round(cor(bmi[which(race=='OtherHispanic')], pfoa[which(race=='OtherHispanic')], use = "complete.obs"),4)
+corr_pfoa_bmi_White = round(cor(bmi[which(race=='White')], pfoa[which(race=='White')], use = "complete.obs"),4)
+
+corr_pfoa_bmi = c(corr_pfoa_bmi_overall, 
+                  corr_pfoa_bmi_male, corr_pfoa_bmi_female,
+                  corr_pfoa_bmi_poor, corr_pfoa_bmi_good, corr_pfoa_bmi_excellent,
+                  corr_pfoa_bmi_smoker, corr_pfoa_bmi_nonsmoker,
+                  corr_pfoa_bmi_White, corr_pfoa_bmi_Black, corr_pfoa_bmi_Asian)
+
+# PFOS
+# PFOS vs Cholestrol
+
+{
+corr_pfos_cholestrol_overall = round(cor(cholestrol, pfos, use = "complete.obs"),4)
+
+corr_pfos_cholestrol_male = round(cor(cholestrol[which(gender=='Male')], pfos[which(gender=='Male')], use = "complete.obs"),4)
+corr_pfos_cholestrol_female = round(cor(cholestrol[which(gender=='Female')], pfos[which(gender=='Female')], use = "complete.obs"),4)
+
+corr_pfos_cholestrol_smoker = round(cor(cholestrol[which(smoking=='Yes')], pfos[which(smoking=='Yes')], use = "complete.obs"),4)
+corr_pfos_cholestrol_nonsmoker = round(cor(cholestrol[which(smoking=='No')], pfos[which(smoking=='No')], use = "complete.obs"),4)
+
+corr_pfos_cholestrol_poor = round(cor(cholestrol[which(diet=='Poor')], pfos[which(diet=='Poor')], use = "complete.obs"),4)
+corr_pfos_cholestrol_good = round(cor(cholestrol[which(diet=='Good')], pfos[which(diet=='Good')], use = "complete.obs"),4)
+corr_pfos_cholestrol_excellent = round(cor(cholestrol[which(diet=='Excellent')], pfos[which(diet=='Excellent')], use = "complete.obs"),4)
+
+corr_pfos_cholestrol_Asian = round(cor(cholestrol[which(race=='Asian')], pfos[which(race=='Asian')], use = "complete.obs"),4)
+corr_pfos_cholestrol_Black = round(cor(cholestrol[which(race=='Black')], pfos[which(race=='Black')], use = "complete.obs"),4)
+corr_pfos_cholestrol_White = round(cor(cholestrol[which(race=='White')], pfos[which(race=='White')], use = "complete.obs"),4)
+
+corr_pfos_cholestrol = c(corr_pfos_cholestrol_overall, 
+                         corr_pfos_cholestrol_male, corr_pfos_cholestrol_female,
+                         corr_pfos_cholestrol_poor, corr_pfos_cholestrol_good, corr_pfos_cholestrol_excellent,
+                         corr_pfos_cholestrol_smoker, corr_pfos_cholestrol_nonsmoker,
+                         corr_pfos_cholestrol_White, corr_pfos_cholestrol_Black, corr_pfos_cholestrol_Asian)
+
+# PFOS vs Glyco
+corr_pfos_glyco_overall = round(cor(glyco, pfos, use = "complete.obs"),4)
+
+corr_pfos_glyco_male = round(cor(glyco[which(gender=='Male')], pfos[which(gender=='Male')], use = "complete.obs"),4)
+corr_pfos_glyco_female = round(cor(glyco[which(gender=='Female')], pfos[which(gender=='Female')], use = "complete.obs"),4)
+
+corr_pfos_glyco_smoker = round(cor(glyco[which(smoking=='Yes')], pfos[which(smoking=='Yes')], use = "complete.obs"),4)
+corr_pfos_glyco_nonsmoker = round(cor(glyco[which(smoking=='No')], pfos[which(smoking=='No')], use = "complete.obs"),4)
+
+corr_pfos_glyco_poor = round(cor(glyco[which(diet=='Poor')], pfos[which(diet=='Poor')], use = "complete.obs"),4)
+corr_pfos_glyco_good = round(cor(glyco[which(diet=='Good')], pfos[which(diet=='Good')], use = "complete.obs"),4)
+corr_pfos_glyco_excellent = round(cor(glyco[which(diet=='Excellent')], pfos[which(diet=='Excellent')], use = "complete.obs"),4)
+
+corr_pfos_glyco_Asian = round(cor(glyco[which(race=='Asian')], pfos[which(race=='Asian')], use = "complete.obs"),4)
+corr_pfos_glyco_Black = round(cor(glyco[which(race=='Black')], pfos[which(race=='Black')], use = "complete.obs"),4)
+corr_pfos_glyco_MexicanAmerican = round(cor(glyco[which(race=='MexicanAmerican')], pfos[which(race=='MexicanAmerican')], use = "complete.obs"),4)
+corr_pfos_glyco_Other = round(cor(glyco[which(race=='Other')], pfos[which(race=='Other')], use = "complete.obs"),4)
+corr_pfos_glyco_OtherHispanic = round(cor(glyco[which(race=='OtherHispanic')], pfos[which(race=='OtherHispanic')], use = "complete.obs"),4)
+corr_pfos_glyco_White = round(cor(glyco[which(race=='White')], pfos[which(race=='White')], use = "complete.obs"),4)
+
+corr_pfos_glyco = c(corr_pfos_glyco_overall, 
+                    corr_pfos_glyco_male, corr_pfos_glyco_female,
+                    corr_pfos_glyco_poor, corr_pfos_glyco_good, corr_pfos_glyco_excellent,
+                    corr_pfos_glyco_smoker, corr_pfos_glyco_nonsmoker,
+                    corr_pfos_glyco_White, corr_pfos_glyco_Black, corr_pfos_glyco_Asian)
+
+# PFOS vs bmi
+corr_pfos_bmi_overall = round(cor(bmi, pfos, use = "complete.obs"),4)
+
+corr_pfos_bmi_male = round(cor(bmi[which(gender=='Male')], pfos[which(gender=='Male')], use = "complete.obs"),4)
+corr_pfos_bmi_female = round(cor(bmi[which(gender=='Female')], pfos[which(gender=='Female')], use = "complete.obs"),4)
+
+corr_pfos_bmi_smoker = round(cor(bmi[which(smoking=='Yes')], pfos[which(smoking=='Yes')], use = "complete.obs"),4)
+corr_pfos_bmi_nonsmoker = round(cor(bmi[which(smoking=='No')], pfos[which(smoking=='No')], use = "complete.obs"),4)
+
+corr_pfos_bmi_poor = round(cor(bmi[which(diet=='Poor')], pfos[which(diet=='Poor')], use = "complete.obs"),4)
+corr_pfos_bmi_good = round(cor(bmi[which(diet=='Good')], pfos[which(diet=='Good')], use = "complete.obs"),4)
+corr_pfos_bmi_excellent = round(cor(bmi[which(diet=='Excellent')], pfos[which(diet=='Excellent')], use = "complete.obs"),4)
+
+corr_pfos_bmi_Asian = round(cor(bmi[which(race=='Asian')], pfos[which(race=='Asian')], use = "complete.obs"),4)
+corr_pfos_bmi_Black = round(cor(bmi[which(race=='Black')], pfos[which(race=='Black')], use = "complete.obs"),4)
+corr_pfos_bmi_MexicanAmerican = round(cor(bmi[which(race=='MexicanAmerican')], pfos[which(race=='MexicanAmerican')], use = "complete.obs"),4)
+corr_pfos_bmi_Other = round(cor(bmi[which(race=='Other')], pfos[which(race=='Other')], use = "complete.obs"),4)
+corr_pfos_bmi_OtherHispanic = round(cor(bmi[which(race=='OtherHispanic')], pfos[which(race=='OtherHispanic')], use = "complete.obs"),4)
+corr_pfos_bmi_White = round(cor(bmi[which(race=='White')], pfos[which(race=='White')], use = "complete.obs"),4)
+
+corr_pfos_bmi = c(corr_pfos_bmi_overall, 
+                  corr_pfos_bmi_male, corr_pfos_bmi_female,
+                  corr_pfos_bmi_poor, corr_pfos_bmi_good, corr_pfos_bmi_excellent,
+                  corr_pfos_bmi_smoker, corr_pfos_bmi_nonsmoker,
+                  corr_pfos_bmi_White, corr_pfos_bmi_Black, corr_pfos_bmi_Asian)
+
+dataframe = c(corr_pfoa_cholestrol, corr_pfoa_glyco, corr_pfoa_bmi, corr_pfos_cholestrol, corr_pfos_glyco, corr_pfos_bmi )                         
+write.csv(dataframe, file="Correlation_Matrix_Raw.csv")
+
+}
+
+```
+
+
+```{r}
+# Frequency Distribution of dependent and independent variables - histograms
+
+#hist BMI
+jpeg(file="Output_Images/bmi.jpg", width = w, height = h, units='mm', res = res)
+hist(bmi, main= " ", xlab= "BMI", col= "#1c9099")
+dev.off()
+
+#hist cholestrol
+jpeg(file="Output_Images/cholestrol_distribution.jpg", width = w, height = h, units='mm', res = res)
+hist(cholestrol, main= " ", xlab= "Cholestrol mg/dL", col= "#a6bddb")
+dev.off()
+
+#hist glycohemoglobin
+jpeg(file="Output_Images/glycohemoglobin_distribution.jpg", width = w, height = h, units='mm', res = res)
+hist(glyco, main= " ", xlab= "Glycohemoglobin %", col= "#f7fcb9")
+dev.off()
+```
+
+## Creating Tableones with summary statistics
+
+```{r}
+# create columns that contains pfoa/pfoas's quantile ranks
+
+Quantile_rank = ntile(pfoa, 4)
+Quantile_rank_2 = ntile(pfos,4)
+
+# rename value
+Quantile_rank[Quantile_rank == 1] = "1st quartile PFOA"
+Quantile_rank[Quantile_rank == 2] = "2nd quartile PFOA"
+Quantile_rank[Quantile_rank == 3] = "3rd quartile PFOA"
+Quantile_rank[Quantile_rank == 4] = "4th quartile PFOA"
+
+Quantile_rank_2[Quantile_rank_2 == 1] = "1st quartile PFOS"
+Quantile_rank_2[Quantile_rank_2 == 2] = "2nd quartile PFOS"
+Quantile_rank_2[Quantile_rank_2 == 3] = "3rd quartile PFOS"
+Quantile_rank_2[Quantile_rank_2 == 4] = "4th quartile PFOS"
+
+# add into dataframe
+DATA = mutate(DATA, Quantile_rank)
+DATA = mutate(DATA, Quantile_rank_2)
+
+# create table one
+table_vars = c("Gender", "Age", "Race", "Diet", "Smoking", "Sedentary","BMI", "Cholestrol", "Glycohemoglobin")
+table_strat_1 = c("Quantile_rank")
+
+tab1 = CreateTableOne(data = DATA, 
+                      vars = table_vars,
+                      strata = table_strat_1)
+
+
+print(tab1)
+
+# Exporting to excel
+table1save = print(tab1, test = FALSE)
+write.csv(table1save, file = "Output/Lab2_Table1.csv")
+
+
+
+table_strat_2 = c("Quantile_rank_2")
+
+tab2 = CreateTableOne(data = DATA, 
+                      vars = table_vars,
+                      strata = table_strat_2)
+
+
+print(tab2)
+
+# Exporting to excel
+table2save = print(tab2, test = FALSE)
+write.csv(table2save, file = "Output/Lab2_Table2.csv")
+
+
+tab3 = CreateTableOne(data = DATA, 
+                      vars = table_vars,
+                      strata = table_strat_2, addOverall = TRUE)
+
+
+print(tab3)
+
+# Exporting to excel
+table3save = print(tab3, test = FALSE)
+write.csv(table3save, file = "Output/Lab2_Table3.csv")
+
+```
+
+##Building regression models
+```{r}
+#change data name for easier accessibility
+
+D <- DATA
+
+#lm models for cholesterol vs variables
+
+{#lm model for cholesterol vs pfos
+lm.Cholesterol.pfos = lm(D$Cholestrol ~ log10(D$PFOS))
+summary(lm.Cholesterol.pfos)
+#lm model for cholesterol vs pfoa
+lm.Cholesterol.pfoa = lm(D$Cholestrol ~log10(D$PFOA))
+summary(lm.Cholesterol.pfoa)
+#lm model for cholesterol vs gender
+lm.Cholesterol.gender = lm(D$Cholestrol ~D$Gender)
+summary(lm.Cholesterol.gender)
+#lm model for cholesterol vs age
+lm.Cholesterol.age = lm(D$Cholestrol ~D$Age)
+summary(lm.Cholesterol.age)
+race_ordered = ordered(D$Race, levels=c("White", "Black", "MexicanAmerican", "OtherHispanic", "Asian","Other"))
+#lm model for cholesterol vs race
+lm.Cholesterol.race = lm(D$Cholestrol ~ D$Race)
+summary(lm.Cholesterol.race)
+#lm model for cholesterol vs diet
+lm.Cholesterol.diet = lm(D$Cholestrol ~ D$Diet)
+summary(lm.Cholesterol.diet)
+#lm model for cholesterol vs smoking
+lm.Cholesterol.smoking = lm(D$Cholestrol ~ D$Smoking)
+summary(lm.Cholesterol.smoking)
+#lm model for cholesterol vs sedentary
+lm.Cholesterol.sedentary = lm(D$Cholestrol ~ D$Sedentary)
+summary(lm.Cholesterol.sedentary)
+}
+#lm models for BMI vs variables
+{
+  #lm model for BMI vs pfos
+  lm.BMI.pfos = lm(D$BMI ~ log10(D$PFOS))
+  summary(lm.BMI.pfos)
+  #lm model for BMI vs pfoa
+  lm.BMI.pfoa = lm(D$BMI ~log10(D$PFOA))
+  summary(lm.BMI.pfoa)
+  #lm model for BMI vs gender
+  lm.BMI.gender = lm(D$BMI ~D$Gender)
+  summary(lm.BMI.gender)
+  #lm model for BMI vs age
+  lm.BMI.age = lm(D$BMI ~D$Age)
+  summary(lm.BMI.age)
+  race_ordered = ordered(D$Race, levels=c("White", "Black", "MexicanAmerican", "OtherHispanic", "Asian","Other"))
+  #lm model for BMI vs race
+  lm.BMI.race = lm(D$BMI ~ race_ordered)
+  summary(lm.BMI.race)
+  #lm model for BMI vs diet
+  lm.BMI.diet = lm(D$BMI ~ D$Diet)
+  summary(lm.BMI.diet)
+  #lm model for BMI vs smoking
+  lm.BMI.smoking = lm(D$BMI ~ D$Smoking)
+  summary(lm.BMI.smoking)
+  #lm model for BMI vs sedentary
+  lm.BMI.sedentary = lm(D$BMI ~ D$Sedentary)
+  summary(lm.BMI.sedentary)
+}
+#lm models for Glycohemoglobin vs variables
+{
+  #lm model for Glycohemoglobin vs pfos
+  lm.Glycohemoglobin.pfos = lm(D$Glycohemoglobin ~ log10(D$PFOS))
+  summary(lm.Glycohemoglobin.pfos)
+  #lm model for Glycohemoglobin vs pfoa
+  lm.Glycohemoglobin.pfoa = lm(D$Glycohemoglobin ~log10(D$PFOA))
+  summary(lm.Glycohemoglobin.pfoa)
+  #lm model for Glycohemoglobin vs gender
+  lm.Glycohemoglobin.gender = lm(D$Glycohemoglobin ~D$Gender)
+  summary(lm.Glycohemoglobin.gender)
+  #lm model for Glycohemoglobin vs age
+  lm.Glycohemoglobin.age = lm(D$Glycohemoglobin ~D$Age)
+  summary(lm.Glycohemoglobin.age)
+  race_ordered = ordered(D$Race, levels=c("White", "Black", "MexicanAmerican", "OtherHispanic", "Asian","Other"))
+  #lm model for Glycohemoglobin vs race
+  lm.Glycohemoglobin.race = lm(D$Glycohemoglobin ~ D$Race)
+  summary(lm.Glycohemoglobin.race)
+  #lm model for Glycohemoglobin vs diet
+  lm.Glycohemoglobin.diet = lm(D$Glycohemoglobin ~ D$Diet)
+  summary(lm.Glycohemoglobin.diet)
+  #lm model for Glycohemoglobin vs smoking
+  lm.Glycohemoglobin.smoking = lm(D$Glycohemoglobin ~ D$Smoking)
+  summary(lm.Glycohemoglobin.smoking)
+  #lm model for Glycohemoglobin vs sedentary
+  lm.Glycohemoglobin.sedentary = lm(D$Glycohemoglobin ~ D$Sedentary)
+  summary(lm.Glycohemoglobin.sedentary)
+}
+
+#creating new column with pfos quartiles
+Quantile_rank = ntile(D$PFOS,4)
+Quantile_rank[Quantile_rank == 1] = "1st quartile PFOS"
+Quantile_rank[Quantile_rank == 2] = "2nd quartile PFOS"
+Quantile_rank[Quantile_rank == 3] = "3rd quartile PFOS"
+Quantile_rank[Quantile_rank == 4] = "4th quartile PFOS"
+D = mutate(D, Quantile_rank)
+
+#desc stats for age grouped by quartile
+group_by(D, Quantile_rank) %>% summarize(mean_age=mean(Age), sd_age=sd(Age))
+#anova for diff in means
+aov.age = aov(Age ~ Quantile_rank, data=D)
+summary(aov.age)   
+
+#desc stats for bmi grouped by quartile
+group_by(D, Quantile_rank) %>% summarize(mean_bmi=mean(BMI), na.rm = TRUE, sd_bmi=sd(BMI), na.rm = TRUE)
+#anova for diff in means
+aov.bmi = aov(BMI ~ Quantile_rank, data=D)
+summary(aov.bmi)   
+
+#desc stats for cholestrol grouped by quartile
+group_by(D, Quantile_rank) %>% summarize(mean_Cholestrol=mean(Cholestrol), na.rm = TRUE, sd_Cholestrol=sd(Cholestrol), na.rm = TRUE)
+#anova for diff in means
+aov.cholestrol = aov(Cholestrol ~ Quantile_rank, data=D)
+summary(aov.cholestrol)   
+
+#desc stats for glycohemoglobin grouped by quartile
+group_by(D, Quantile_rank) %>% summarize(mean_Glycohemoglobin=mean(Glycohemoglobin), na.rm = TRUE, sd_Glycohemoglobin=sd(Glycohemoglobin), na.rm = TRUE)
+#anova for diff in means
+aov.Glycohemoglobin = aov(Glycohemoglobin ~ Quantile_rank, data=D)
+summary(aov.Glycohemoglobin)
+
+#desc stats for Sedentary grouped by quartile
+group_by(D, Quantile_rank) %>% summarize(mean_Sedentary=mean(Sedentary), na.rm = TRUE, sd_Sedentary=sd(Sedentary), na.rm = TRUE)
+#anova for diff in means
+aov.Sedentary = aov(Sedentary ~ Quantile_rank, data=D)
+summary(aov.Sedentary)   
+
+# Proportions within regions for categorical variables
+#pfos vs smoking
+prop.table(table(D$Quantile_rank, D$Smoking), margin = 1)
+round(prop.table(table(D$Quantile_rank, D$Smoking), margin = 1),3) *100
+chisq.test(table(D$Quantile_rank,D$Smoking))
+
+
+# Proportions within regions for categorical variables
+#pfos vs Gender
+prop.table(table(D$Quantile_rank, D$Gender), margin = 1)
+round(prop.table(table(D$Quantile_rank, D$Gender), margin = 1),3) *100
+ chisq.test(table(D$Quantile_rank,D$Gender))
+
+ # Proportions within regions for categorical variables
+ #pfos vs Diet
+ prop.table(table(D$Quantile_rank, D$Diet), margin = 1)
+ round(prop.table(table(D$Quantile_rank, D$Diet), margin = 1),3) *100
+ chisq.test(table(D$Quantile_rank,D$Diet))
+ 
+ # Proportions within regions for categorical variables
+ #pfos vs Race
+ prop.table(table(D$Quantile_rank, D$Race), margin = 1)
+ round(prop.table(table(D$Quantile_rank, D$Race), margin = 1),3) *100
+ chisq.test(table(D$Quantile_rank,D$Race))
+
+ #lm plot chol vs pfos
+ w = 300
+ h = 200
+ res = 300
+ 
+ jpeg(file="test.1.jpg", width = w, height = h, units='mm', res = res)
+plot(D$Cholestrol ~ log10(D$PFOS),col="#636363", ylab= "Cholestrol mg/dL", xlab="Log_PFOS ng/ml" , cex.lab=1.4,cex.axis=1.2)
+dev.off()
+ 
+ #residual plots for chol vs pfos
+w = 300
+h = 200
+res = 300
+
+jpeg(file="test.2.jpg", width = w, height = h, units='mm', res = res)
+lm.cholestrol.vs.pfos = lm(D$Cholestrol ~ log10(D$PFOS))
+residuals = resid(lm.cholestrol.vs.pfos)
+plot(fitted(lm.cholestrol.vs.pfos),residuals, col="#636363", pch =21, xlab= "Predicted Cholestrol values", ylab="Residuals",cex.lab=1.4,cex.axis=1.2,)
+abline(0,0, col ="red", lwd=1.5)
+dev.off()
+
+#lm plot BMI vs pfos
+w = 300
+h = 200
+res = 300
+
+jpeg(file="test.5.jpg", width = w, height = h, units='mm', res = res)
+plot(D$BMI ~ log10(D$PFOS),col="#636363", ylab= "BMI", xlab="Log_PFOS ng/ml" , cex.lab=1.4,cex.axis=1.2)
+dev.off()
+
+
+#residual plots for BMI vs pfos
+w = 300
+h = 200
+res = 300
+
+jpeg(file="test.6.jpg", width = w, height = h, units='mm', res = res)
+lm.bmi.vs.pfos = lm(D$BMI ~ log10(D$PFOS))
+residuals = resid(lm.bmi.vs.pfos)
+plot(fitted(lm.bmi.vs.pfos),residuals, col="#636363", pch =21, xlab= "Predicted BMI values", ylab="Residuals",cex.lab=1.4,cex.axis=1.2, )
+abline(0,0, col ="red", lwd=1.5)
+dev.off()
+
+#hist of residuals
+w = 300
+h = 200
+res = 300
+
+jpeg(file="test.7.jpg", width = w, height = h, units='mm', res = res)
+hist(residuals, main = "", col="#636363", xlab= "Residuals", cex.lab=1.4,cex.axis=1.2)
+dev.off()
+
+#diet ordering
+diet_ordered = ordered(D$Diet, levels=c("Excellent", "VeryGood", "Good", "Fair", "Poor"))
+
+#boxplot comparing cholestrol across all groups
+w = 300
+h = 200
+res = 300
+
+#overall boxplot cholestrol vs all variables
+jpeg(file="test.4.jpg", width = w, height = h, units='mm', res = res)
+boxplot(D$Cholestrol~D$Gender, at = c(1,2), xlim = c(0,18), xlab = "", ylab = "Cholestrol (mg/dL)", col= "#feb24c", cex.axis = 0.75)
+boxplot(D$Cholestrol~D$Race, at = c(4:9), xlab = "", ylab = "Cholestrol (mg/dL)", col= "#99d8c9", add = TRUE, cex.axis = 0.75, names = c("Asian", "Black", "\nMex\nAmer", "Other", "\nOther\nHisp", "White"))
+boxplot(D$Cholestrol~diet_ordered, at = c(11:15), xlab = "", ylab = "Cholestrol (mg/dL)", col= "#bcbddc", add = TRUE, cex.axis = 0.75, names = c("Excel", "V.Good", "Good", "Fair", "Poor"))
+boxplot(D$Cholestrol~D$Smoking, at = c(17,18), xlim = c(0,20), xlab = "", ylab = "Cholestrol (mg/dL)", col= "#fa9fb5", cex.axis = 0.75, add = TRUE)
+abline(h=median(D$Cholestrol, na.rm = TRUE), col='red')
+dev.off()
+
+#overall boxplot BMI vs all variables
+jpeg(file="test.9.jpg", width = w, height = h, units='mm', res = res)
+boxplot(D$BMI~D$Gender, at = c(1,2), xlim = c(0,18), xlab = "", ylab = "BMI ", col= "#feb24c", cex.axis = 0.75)
+boxplot(D$BMI~D$Race, at = c(4:9), xlab = "", ylab = "BMI ", col= "#99d8c9", add = TRUE, cex.axis = 0.75, names = c("Asian", "Black", "\nMex\nAmer", "Other", "\nOther\nHisp", "White"))
+boxplot(D$BMI~diet_ordered, at = c(11:15), xlab = "", ylab = "BMI ", col= "#bcbddc", add = TRUE, cex.axis = 0.75, names = c("Excel", "V.Good", "Good", "Fair", "Poor"))
+boxplot(D$BMI~D$Smoking, at = c(17,18), xlim = c(0,20), xlab = "", ylab = "BMI ", col= "#fa9fb5", cex.axis = 0.75, add = TRUE)
+abline(h=median(D$BMI, na.rm = TRUE), col='red')
+dev.off()
+
+#overall boxplot Glycohemoglobin vs all variables
+jpeg(file="test.10.jpg", width = w, height = h, units='mm', res = res)
+boxplot(D$Glycohemoglobin~D$Gender, at = c(1,2), xlim = c(0,18), xlab = "", ylab = "Glycohemoglobin (%)", col= "#feb24c", cex.axis = 0.75)
+boxplot(D$Glycohemoglobin~D$Race, at = c(4:9), xlab = "", ylab = "Glycohemoglobin (%)", col= "#99d8c9", add = TRUE, cex.axis = 0.75, names = c("Asian", "Black", "\nMex\nAmer", "Other", "\nOther\nHisp", "White"))
+boxplot(D$Glycohemoglobin~diet_ordered, at = c(11:15), xlab = "", ylab = "Glycohemoglobin (%)", col= "#bcbddc", add = TRUE, cex.axis = 0.75, names = c("Excel", "V.Good", "Good", "Fair", "Poor"))
+boxplot(D$Glycohemoglobin~D$Smoking, at = c(17,18), xlim = c(0,20), xlab = "", ylab = "Glycohemoglobin (%)", col= "#fa9fb5", cex.axis = 0.75, add = TRUE)
+abline(h=median(D$Glycohemoglobin, na.rm = TRUE), col='red')
+dev.off()
+
+plot(D$PFOS ~ D$Age, na.rm=TRUE)
+cor(D$Cholestrol, D$Age, use="complete.obs")
+
+#QQplot for residuls
+jpeg(file="test.20.jpg", width = w, height = h, units='mm', res = res)
+qqnorm(residuals, main = "", col="#636363", xlab = "Normal Quantiles", ylab ="Observed Quantiles (Standardized Residuals)" , cex.lab=1.4,cex.axis=1.2, pch=21, ylim =c(-100,200))
+qqline(residuals, col = "red", lwd=1.5)
+dev.off()
+
+
+```
+##Building multiple regression models
+
+```{r}
+
+mult_reg_model =lm(D$Cholestrol ~ log10(D$PFOS)+ D$Gender + D$Age + D$Race + D$Diet  + D$Smoking + D$Sedentary)
+summary(mult_reg_model)
+lm(D$Cholestrol ~ log10(D$PFOS))
+summary(lm(D$Cholestrol ~ log10(D$PFOS)))
+mult_reg_model.2 =lm(D$Cholestrol ~ log10(D$PFOA)+ D$Gender + D$Age + D$Race + D$Diet  + D$Smoking + D$Sedentary)
+summary(mult_reg_model.2)
+lm(D$Cholestrol ~ log10(D$PFOA))
+
+
+```
+
